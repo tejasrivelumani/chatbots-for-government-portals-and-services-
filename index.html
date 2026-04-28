@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GovBot — Government Services Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --navy:        #0d1b2a;
+      --deep:        #162436;
+      --teal:        #0a7b6e;
+      --teal-light:  #12a899;
+      --teal-dim:    #e6f4f2;
+      --gold:        #c9a84c;
+      --cream:       #f4efe6;
+      --cream-dark:  #e8e0cf;
+      --text:        #1a1a2e;
+      --muted:       #6b7280;
+      --white:       #ffffff;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      height: 100vh;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--navy); color: #fff;
+      height: 60px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 28px;
+      flex-shrink: 0; box-shadow: 0 2px 12px rgba(0,0,0,.3); z-index:10;
+    }
+    .h-brand { display:flex; align-items:center; gap:12px; }
+    .h-emblem {
+      width:38px; height:38px; background:var(--gold);
+      border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px;
+    }
+    .h-name { font-family:'Libre Baskerville',serif; font-size:17px; font-weight:700; }
+    .h-sub  { font-size:10px; color:#7a90a8; letter-spacing:.08em; text-transform:uppercase; margin-top:1px; }
+    .h-status {
+      display:flex; align-items:center; gap:7px; font-size:11.5px; color:#7a90a8;
+      background:rgba(255,255,255,.06); padding:5px 13px; border-radius:20px;
+      border:1px solid rgba(255,255,255,.09);
+    }
+    .dot { width:7px; height:7px; background:#22c55e; border-radius:50%; animation:blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* LAYOUT */
+    .layout { display:flex; flex:1; overflow:hidden; }
+
+    /* SIDEBAR */
+    aside {
+      width:268px; flex-shrink:0; background:var(--deep);
+      display:flex; flex-direction:column;
+      border-right:1px solid rgba(255,255,255,.06); overflow-y:auto;
+    }
+    aside::-webkit-scrollbar { width:3px; }
+    aside::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:10px; }
+
+    .sb-mode { padding:14px 16px 10px; border-bottom:1px solid rgba(255,255,255,.07); }
+    .sb-mode-label { font-size:10px; color:#4a6177; text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px; }
+    .mode-row { display:flex; gap:4px; }
+    .mode-btn {
+      flex:1; padding:6px 0; font-size:12px; border:none; border-radius:7px;
+      cursor:pointer; font-family:'DM Sans',sans-serif;
+      background:rgba(255,255,255,.05); color:#64748b;
+      transition:background .15s, color .15s;
+    }
+    .mode-btn.active { background:var(--teal); color:#fff; font-weight:600; }
+
+    .sb-section { padding:16px 14px 8px; }
+    .sb-label { font-size:10px; color:#4a6177; letter-spacing:.1em; text-transform:uppercase; margin-bottom:10px; font-weight:600; }
+    .sb-chip {
+      display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px;
+      font-size:12.5px; color:#94a3b8; cursor:pointer; margin-bottom:2px;
+      transition:background .12s, color .12s; border:none; background:transparent; width:100%; text-align:left;
+    }
+    .sb-chip:hover { background:rgba(255,255,255,.07); color:#e2e8f0; }
+    .sb-chip .ic { font-size:15px; width:22px; text-align:center; flex-shrink:0; }
+
+    .sb-foot {
+      margin-top:auto; padding:14px 16px; font-size:11px; color:#374151;
+      line-height:1.7; border-top:1px solid rgba(255,255,255,.05);
+    }
+
+    /* CHAT PANEL */
+    .chat-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+    .messages {
+      flex:1; overflow-y:auto; padding:24px 28px;
+      display:flex; flex-direction:column; gap:16px; scroll-behavior:smooth;
+    }
+    .messages::-webkit-scrollbar { width:4px; }
+    .messages::-webkit-scrollbar-thumb { background:#d5cbb8; border-radius:10px; }
+
+    /* WELCOME */
+    .welcome {
+      background:linear-gradient(135deg, var(--navy) 0%, #1a3a52 100%);
+      border-radius:16px; padding:26px 28px; color:#fff; position:relative; overflow:hidden;
+    }
+    .welcome::before {
+      content:''; position:absolute; top:-50px; right:-50px;
+      width:180px; height:180px;
+      background:radial-gradient(circle, rgba(201,168,76,.18) 0%, transparent 70%);
+      border-radius:50%;
+    }
+    .welcome h2 { font-family:'Libre Baskerville',serif; font-size:20px; margin-bottom:7px; position:relative; }
+    .welcome p  { font-size:13px; color:#94a3b8; line-height:1.7; position:relative; max-width:400px; }
+
+    .quick-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:9px; margin-top:4px; }
+    .quick-btn {
+      background:#fff; border:1px solid var(--cream-dark); border-radius:10px;
+      padding:11px 13px; font-size:12.5px; color:var(--text); cursor:pointer;
+      text-align:left; transition:all .15s; font-family:'DM Sans',sans-serif; line-height:1.4;
+    }
+    .quick-btn:hover {
+      border-color:var(--teal-light); background:var(--teal-dim); color:var(--teal);
+      transform:translateY(-1px); box-shadow:0 4px 12px rgba(10,123,110,.1);
+    }
+    .quick-btn .qi { display:block; font-size:17px; margin-bottom:4px; }
+
+    /* MESSAGE ROW */
+    .msg-row { display:flex; gap:10px; animation:rise .3s ease; }
+    .msg-row.user { flex-direction:row-reverse; }
+    @keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    .avatar {
+      width:34px; height:34px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; flex-shrink:0; margin-top:2px;
+    }
+    .avatar.bot  { background:var(--teal); color:#fff; }
+    .avatar.user { background:var(--gold); color:var(--navy); font-size:11px; font-weight:700; }
+
+    .msg-content { max-width:72%; display:flex; flex-direction:column; gap:3px; }
+    .msg-row.user .msg-content { align-items:flex-end; }
+
+    /* User bubble */
+    .bubble-user {
+      background:var(--navy); color:#fff;
+      padding:11px 15px; border-radius:14px; border-bottom-right-radius:3px;
+      font-size:14px; line-height:1.6;
+    }
+
+    /* Bot structured card */
+    .bot-card {
+      background:#fff; border:1px solid var(--cream-dark);
+      border-radius:14px; border-bottom-left-radius:3px;
+      overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.06); max-width:100%;
+    }
+    .card-header {
+      background:var(--navy); color:#fff; padding:11px 16px;
+      display:flex; align-items:center; gap:9px;
+    }
+    .card-header .ic { font-size:16px; }
+    .card-title { font-size:14px; font-weight:600; }
+    .intent-badge {
+      margin-left:auto; background:rgba(255,255,255,.12);
+      font-size:10px; color:#94a3b8; padding:2px 8px; border-radius:20px; letter-spacing:.05em;
+    }
+    .card-body { padding:14px 16px; }
+    .steps-list { list-style:none; display:flex; flex-direction:column; gap:9px; }
+    .step-item { display:flex; gap:10px; align-items:flex-start; font-size:13px; line-height:1.6; color:var(--text); }
+    .step-num {
+      width:22px; height:22px; border-radius:50%; background:var(--teal); color:#fff;
+      font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; margin-top:1px;
+    }
+    .card-link {
+      display:inline-flex; align-items:center; gap:6px; margin-top:13px;
+      background:var(--teal-dim); color:var(--teal); font-size:12.5px; font-weight:600;
+      padding:8px 14px; border-radius:8px; text-decoration:none;
+      transition:background .15s; border:1px solid rgba(10,123,110,.18);
+    }
+    .card-link:hover { background:#d0eeea; }
+
+    /* Plain bot bubble */
+    .bubble-bot {
+      background:#fff; color:var(--text); padding:12px 15px;
+      border-radius:14px; border-bottom-left-radius:3px; font-size:14px; line-height:1.65;
+      border:1px solid var(--cream-dark); box-shadow:0 2px 8px rgba(0,0,0,.05);
+      white-space:pre-wrap;
+    }
+
+    .ts { font-size:10px; color:var(--muted); padding:0 3px; }
+
+    /* Typing */
+    .typing-row { display:flex; gap:10px; }
+    .typing-bubble {
+      background:#fff; border:1px solid var(--cream-dark);
+      padding:11px 15px; border-radius:14px; border-bottom-left-radius:3px;
+      display:flex; gap:5px; align-items:center; box-shadow:0 2px 8px rgba(0,0,0,.05);
+    }
+    .td { width:7px; height:7px; background:var(--teal); border-radius:50%; animation:bop 1.2s infinite; }
+    .td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
+    @keyframes bop { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    /* INPUT */
+    .input-zone {
+      padding:13px 28px 17px; background:var(--cream);
+      border-top:1px solid var(--cream-dark); flex-shrink:0;
+    }
+    .input-wrap {
+      display:flex; gap:8px; align-items:flex-end; background:#fff;
+      border:1.5px solid var(--cream-dark); border-radius:13px; padding:9px 11px;
+      box-shadow:0 2px 8px rgba(0,0,0,.05); transition:border-color .2s, box-shadow .2s;
+    }
+    .input-wrap:focus-within { border-color:var(--teal); box-shadow:0 0 0 3px rgba(10,123,110,.08); }
+    textarea {
+      flex:1; border:none; outline:none; resize:none;
+      font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text);
+      background:transparent; line-height:1.5; min-height:24px; max-height:110px;
+      overflow-y:auto; padding:2px 4px;
+    }
+    textarea::placeholder { color:#b5a890; }
+    .send-btn {
+      width:37px; height:37px; flex-shrink:0; background:var(--teal); border:none;
+      border-radius:9px; color:#fff; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .15s, transform .1s;
+    }
+    .send-btn:hover { background:var(--teal-light); }
+    .send-btn:active { transform:scale(.92); }
+    .send-btn:disabled { background:#b5a890; cursor:not-allowed; }
+    .send-btn svg { width:17px; height:17px; }
+    .input-hint { font-size:11px; color:#b5a890; text-align:center; margin-top:7px; }
+
+    @media(max-width:650px){
+      aside { display:none; }
+      .quick-grid { grid-template-columns:1fr; }
+      .messages { padding:14px; }
+      .input-zone { padding:10px 14px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="h-brand">
+    <div class="h-emblem">🏛️</div>
+    <div>
+      <div class="h-name">GovBot</div>
+      <div class="h-sub">Government Services Assistant</div>
+    </div>
+  </div>
+  <div class="h-status"><div class="dot"></div> Services Online</div>
+</header>
+
+<div class="layout">
+
+  <aside>
+    <div class="sb-mode">
+      <div class="sb-mode-label">Response Mode</div>
+      <div class="mode-row">
+        <button class="mode-btn active" id="btnML"  onclick="setMode('ml')">🤖 ML Model</button>
+        <button class="mode-btn"        id="btnGPT" onclick="setMode('gpt')">✨ GPT-4</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Quick Services</div>
+      <button class="sb-chip" onclick="quickAsk('How do I apply for Aadhaar card?')"><span class="ic">🪪</span>Aadhaar Card</button>
+      <button class="sb-chip" onclick="quickAsk('How to apply for voter ID?')"><span class="ic">🗳️</span>Voter ID</button>
+      <button class="sb-chip" onclick="quickAsk('How to check my pension status?')"><span class="ic">👴</span>Pension Status</button>
+      <button class="sb-chip" onclick="quickAsk('I want to register a complaint')"><span class="ic">📋</span>File Complaint</button>
+      <button class="sb-chip" onclick="quickAsk('How to pay electricity bill?')"><span class="ic">⚡</span>Electricity Bill</button>
+      <button class="sb-chip" onclick="quickAsk('How to pay water bill?')"><span class="ic">💧</span>Water Bill</button>
+      <button class="sb-chip" onclick="quickAsk('How to apply for ration card?')"><span class="ic">🍱</span>Ration Card</button>
+      <button class="sb-chip" onclick="quickAsk('Check my scheme eligibility')"><span class="ic">📊</span>Scheme Eligibility</button>
+      <button class="sb-chip" onclick="quickAsk('Tell me about scholarship information')"><span class="ic">🎓</span>Scholarships</button>
+      <button class="sb-chip" onclick="quickAsk('How to apply for driving license?')"><span class="ic">🚗</span>Driving License</button>
+    </div>
+    <div class="sb-foot">
+      <b style="color:#64748b">ML Mode</b> — intent detected by your trained model → step-by-step guide<br><br>
+      <b style="color:#64748b">GPT Mode</b> — answered by GPT-4.1 via OpenAI API
+    </div>
+  </aside>
+
+  <div class="chat-panel">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcomeCard">
+        <h2>Namaste! How can I help? 🙏</h2>
+        <p>Ask me about any government service — Aadhaar, Voter ID, pension, bills, ration cards, scholarships, driving license, and more.</p>
+      </div>
+      <div class="quick-grid" id="quickGrid">
+        <button class="quick-btn" onclick="quickAsk('How do I apply for Aadhaar card?')"><span class="qi">🪪</span>Apply for Aadhaar card</button>
+        <button class="quick-btn" onclick="quickAsk('How to apply for voter ID?')"><span class="qi">🗳️</span>Apply for Voter ID</button>
+        <button class="quick-btn" onclick="quickAsk('How to check pension status?')"><span class="qi">👴</span>Check pension status</button>
+        <button class="quick-btn" onclick="quickAsk('How to apply for driving license?')"><span class="qi">🚗</span>Driving license</button>
+      </div>
+    </div>
+
+    <div class="input-zone">
+      <div class="input-wrap">
+        <textarea id="inp" rows="1" placeholder="Ask about any government service..."
+          onkeydown="onKey(event)" oninput="grow(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="send()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">GovBot may make errors — always verify from official government portals.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────
+  const ML_URL  = 'http://localhost:4000/predict';  // Node.js → Flask ML
+  const GPT_URL = 'http://localhost:8000/chat';      // FastAPI → OpenAI
+
+  const INTENT_ICONS = {
+    Apply_Aadhaar:               '🪪',
+    Voter_ID_Application:        '🗳️',
+    Check_Pension_Status:        '👴',
+    Complaint_Registration:      '📋',
+    Electricity_Bill_Payment:    '⚡',
+    Water_Bill_Payment:          '💧',
+    Ration_Card_Application:     '🍱',
+    Scheme_Eligibility_Check:    '📊',
+    Scholarship_Information:     '🎓',
+    Driving_License_Application: '🚗',
+  };
+
+  let mode = 'ml', busy = false, welcomeGone = false;
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btnML').classList.toggle('active', m === 'ml');
+    document.getElementById('btnGPT').classList.toggle('active', m === 'gpt');
+  }
+
+  function grow(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 110) + 'px';
+  }
+
+  function onKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  function quickAsk(text) {
+    document.getElementById('inp').value = text;
+    send();
+  }
+
+  function now() {
+    return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function scrollBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  function removeWelcome() {
+    if (!welcomeGone) {
+      welcomeGone = true;
+      document.getElementById('welcomeCard')?.remove();
+      document.getElementById('quickGrid')?.remove();
+    }
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── USER BUBBLE ─────────────────────────────────────────
+  function addUser(text) {
+    document.getElementById('messages').insertAdjacentHTML('beforeend', `
+      <div class="msg-row user">
+        <div class="avatar user">You</div>
+        <div class="msg-content">
+          <div class="bubble-user">${esc(text)}</div>
+          <div class="ts">${now()}</div>
+        </div>
+      </div>`);
+    scrollBottom();
+  }
+
+  // ── RICH CARD (ML structured response) ─────────────────
+  function addBotCard(intent, title, steps, link, linkText) {
+    const icon = INTENT_ICONS[intent] || '🏛️';
+    const label = (intent || '').replace(/_/g,' ');
+    const stepsHTML = steps.map((s, i) => `
+      <li class="step-item">
+        <div class="step-num">${i+1}</div>
+        <div>${esc(s)}</div>
+      </li>`).join('');
+    const linkHTML = link
+      ? `<a class="card-link" href="${link}" target="_blank" rel="noopener">🔗 ${esc(linkText || 'Official Portal')}</a>`
+      : '';
+    document.getElementById('messages').insertAdjacentHTML('beforeend', `
+      <div class="msg-row bot">
+        <div class="avatar bot">${icon}</div>
+        <div class="msg-content">
+          <div class="bot-card">
+            <div class="card-header">
+              <span class="ic">${icon}</span>
+              <span class="card-title">${esc(title)}</span>
+              <span class="intent-badge">${esc(label)}</span>
+            </div>
+            <div class="card-body">
+              <ul class="steps-list">${stepsHTML}</ul>
+              ${linkHTML}
+            </div>
+          </div>
+          <div class="ts">${now()}</div>
+        </div>
+      </div>`);
+    scrollBottom();
+  }
+
+  // ── PLAIN BUBBLE (GPT / errors) ─────────────────────────
+  function addBotBubble(text) {
+    document.getElementById('messages').insertAdjacentHTML('beforeend', `
+      <div class="msg-row bot">
+        <div class="avatar bot">🏛️</div>
+        <div class="msg-content">
+          <div class="bubble-bot">${esc(text)}</div>
+          <div class="ts">${now()}</div>
+        </div>
+      </div>`);
+    scrollBottom();
+  }
+
+  // ── TYPING ──────────────────────────────────────────────
+  function showTyping() {
+    document.getElementById('messages').insertAdjacentHTML('beforeend', `
+      <div class="typing-row" id="typingRow">
+        <div class="avatar bot">🏛️</div>
+        <div class="typing-bubble">
+          <div class="td"></div><div class="td"></div><div class="td"></div>
+        </div>
+      </div>`);
+    scrollBottom();
+  }
+  function hideTyping() { document.getElementById('typingRow')?.remove(); }
+
+  // ── MAIN SEND ────────────────────────────────────────────
+  async function send() {
+    if (busy) return;
+    const inp = document.getElementById('inp');
+    const text = inp.value.trim();
+    if (!text) return;
+
+    removeWelcome();
+    inp.value = ''; inp.style.height = 'auto';
+    busy = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    addUser(text);
+    showTyping();
+
+    try {
+      if (mode === 'ml') {
+        // ── ML: POST to Node.js (port 4000) ──────────────
+        const res = await fetch(ML_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `Server responded with status ${res.status}`);
+        }
+        const d = await res.json();
+        hideTyping();
+
+        // If the new rich response format with steps array
+        if (Array.isArray(d.steps) && d.steps.length) {
+          addBotCard(d.intent, d.title, d.steps, d.link, d.linkText);
+        } else {
+          // Fallback if using old index.js with just a "reply" string
+          addBotBubble(d.reply || 'Sorry, no response received.');
+        }
+
+      } else {
+        // ── GPT: POST to FastAPI (port 8000) ──────────────
+        const res = await fetch(GPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
+        if (!res.ok) throw new Error(`GPT server responded with status ${res.status}`);
+        const d = await res.json();
+        hideTyping();
+        addBotBubble(d.reply || 'No response received.');
+      }
+
+    } catch (err) {
+      hideTyping();
+      const isNetwork = err.message.toLowerCase().includes('fetch') ||
+                        err.message.toLowerCase().includes('network') ||
+                        err.message.toLowerCase().includes('failed');
+      let msg;
+      if (isNetwork) {
+        msg = mode === 'ml'
+          ? '⚠️ Cannot reach the ML backend.\n\nMake sure these are running:\n  1. python train_model.py  (first time only)\n  2. python app.py          (Flask on port 5000)\n  3. node index.js          (Node.js on port 4000)'
+          : '⚠️ Cannot reach the GPT backend.\n\nMake sure this is running:\n  uvicorn main:app --reload --port 8000\n\nAlso check your OPENAI_API_KEY in .env';
+      } else {
+        msg = `⚠️ Error: ${err.message}`;
+      }
+      addBotBubble(msg);
+    }
+
+    busy = false;
+    document.getElementById('sendBtn').disabled = false;
+    inp.focus();
+  }
+</script>
+</body>
+</html>
