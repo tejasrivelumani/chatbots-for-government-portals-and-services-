@@ -1,7 +1,7 @@
 
 
 
-GovBot – Chatbot for Government Services
+# **GovBot: Chatbot for Government Portals and Services**
 
 GovBot is a web-based application that provides guided access to common government services through an interactive chatbot and a structured user interface. It reduces the need for users to navigate multiple portals by centralizing service-related information in one place.
 
